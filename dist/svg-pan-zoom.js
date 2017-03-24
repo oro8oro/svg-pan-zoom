@@ -716,18 +716,31 @@ SvgPanZoom.prototype.handleMouseWheel = function(evt) {
 
   // Default delta in case that deltaY is not available
   var delta = evt.deltaY || 1
-    , timeDelta = Date.now() - this.lastMouseWheelEventTime
-    , divider = 3 + Math.max(0, 30 - timeDelta)
+    //, timeDelta = Date.now() - this.lastMouseWheelEventTime
+    //, divider = 3 + Math.max(0, 30 - timeDelta)
 
   // Update cache
   this.lastMouseWheelEventTime = Date.now()
 
   // Make empirical adjustments for browsers that give deltaY in pixels (deltaMode=0)
-  if ('deltaMode' in evt && evt.deltaMode === 0 && evt.wheelDelta) {
-    delta = evt.deltaY === 0 ? 0 :  Math.abs(evt.wheelDelta) / evt.deltaY
+  //if ('deltaMode' in evt && evt.deltaMode === 0 && evt.wheelDelta) {
+  //  delta = evt.deltaY === 0 ? 0 :  Math.abs(evt.wheelDelta) / evt.deltaY
+  //}
+
+  //delta = -0.3 < delta && delta < 0.3 ? delta : (delta > 0 ? 1 : -1) * Math.log(Math.abs(delta) + 10) / divider
+
+  if(evt.wheelDelta) // Chrome & Safari
+    delta = - evt.wheelDelta / 360;
+  else if(evt.detail) // older Firefox
+    delta = - evt.detail / -9;
+  else {
+    delta = (evt.deltaY && evt.deltaMode === 0) ? -evt.deltaY / (window.devicePixelRatio ? window.devicePixelRatio : 1) : // Pixels
+    (evt.deltaY && evt.deltaMode === 1) ? -evt.deltaY * 20 : // Lines
+    (evt.deltaY && evt.deltaMode === 2) ? -evt.deltaY * 60 : // Pages
+    0;
+    delta = - delta / 120;
   }
 
-  delta = -0.3 < delta && delta < 0.3 ? delta : (delta > 0 ? 1 : -1) * Math.log(Math.abs(delta) + 10) / divider
 
   var inversedScreenCTM = this.svg.getScreenCTM().inverse()
     , relativeMousePoint = SvgUtils.getEventPoint(evt, this.svg).matrixTransform(inversedScreenCTM)
